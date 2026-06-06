@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Singapore to London — 2-Year Sprint Analysis</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; font-size: 14px; line-height: 1.5; }
+
+  /* Header */
+  .header { background: #fff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100; }
+  .header-inner { max-width: 720px; margin: 0 auto; padding: 16px; }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
+  .header-title h1 { font-size: 17px; font-weight: 700; color: #0f172a; letter-spacing: -0.3px; }
+  .header-title p { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .header-badges { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+
+  /* Nav tabs */
+  .nav { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav button { padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; border: none; cursor: pointer; transition: all 0.15s; }
+  .nav button.active { background: #0f172a; color: #fff; }
+  .nav button:not(.active) { background: #f1f5f9; color: #64748b; }
+  .nav button:not(.active):hover { background: #e2e8f0; }
+
+  /* Content */
+  .content { max-width: 720px; margin: 0 auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; }
+  .section { display: none; flex-direction: column; gap: 16px; }
+  .section.active { display: flex; }
+
+  /* Cards */
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; }
+  .card-violet { background: #f5f3ff; border-color: #ddd6fe; }
+  .card-amber { background: #fffbeb; border-color: #fde68a; }
+  .card-red { background: #fef2f2; border-color: #fecaca; }
+  .card-green { background: #f0fdf4; border-color: #bbf7d0; }
+  .card-dark { background: #0f172a; border-color: #0f172a; color: #fff; border-radius: 16px; padding: 20px; }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  @media (max-width: 480px) { .grid-3 { grid-template-columns: 1fr; } }
+
+  /* Mini stat card */
+  .stat-card { border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; background: #fff; }
+  .stat-card.amber { background: #fffbeb; border-color: #fde68a; }
+  .stat-card.green { background: #f0fdf4; border-color: #bbf7d0; }
+  .stat-card.red { background: #fef2f2; border-color: #fecaca; }
+  .stat-label { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+  .stat-value { font-size: 15px; font-weight: 700; color: #0f172a; }
+  .stat-note { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+
+  /* Section titles */
+  .section-title { margin-bottom: 4px; }
+  .section-title h2 { font-size: 18px; font-weight: 700; color: #0f172a; letter-spacing: -0.3px; }
+  .section-title p { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+  /* Card titles */
+  .card-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .card-title.green { color: #065f46; }
+  .card-title.red { color: #991b1b; }
+  .card-title.amber { color: #92400e; }
+  .card-title.violet { color: #5b21b6; }
+
+  /* Rows */
+  .row { display: flex; align-items: flex-start; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #f1f5f9; gap: 12px; }
+  .row:last-child { border-bottom: none; }
+  .row.highlight { background: #f8fafc; margin: 0 -20px; padding: 11px 20px; }
+  .row-label { font-size: 13px; color: #475569; flex: 1; }
+  .row-label.bold { font-weight: 700; color: #0f172a; }
+  .row-note { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .row-value { font-size: 13px; font-weight: 700; white-space: nowrap; color: #0f172a; }
+  .row-value.green { color: #059669; }
+  .row-value.red { color: #dc2626; }
+  .row-value.violet { color: #7c3aed; }
+
+  /* Pro/con items */
+  .procon { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  .procon:last-child { border-bottom: none; }
+  .procon-dot { width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px; font-weight: 700; }
+  .procon-dot.pro { background: #d1fae5; color: #059669; }
+  .procon-dot.con { background: #fee2e2; color: #dc2626; }
+  .procon-text { font-size: 13px; color: #475569; line-height: 1.5; }
+
+  /* Badge */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; border: 1px solid; }
+  .badge.green { background: #f0fdf4; color: #065f46; border-color: #bbf7d0; }
+  .badge.amber { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+  .badge.red { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+  .badge.blue { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
+  .badge.slate { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+  .badge.purple { background: #f5f3ff; color: #5b21b6; border-color: #ddd6fe; }
+  .badge.gold { background: #fefce8; color: #854d0e; border-color: #fef08a; }
+
+  /* Scenario cards */
+  .scenario { border-radius: 14px; padding: 18px; border: 1px solid; }
+  .scenario.green { border-color: #bbf7d0; }
+  .scenario.amber { border-color: #fde68a; }
+  .scenario.red { border-color: #fecaca; }
+  .scenario-verdict { font-size: 11px; font-weight: 600; display: inline-block; padding: 2px 8px; border-radius: 999px; margin-bottom: 10px; }
+  .scenario.green .scenario-verdict { background: #f0fdf4; color: #065f46; }
+  .scenario.amber .scenario-verdict { background: #fffbeb; color: #92400e; }
+  .scenario.red .scenario-verdict { background: #fef2f2; color: #991b1b; }
+  .scenario-title { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
+  .scenario-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+  .scenario-stat { background: #f8fafc; border-radius: 10px; padding: 8px; text-align: center; }
+  .scenario-stat-label { font-size: 10px; color: #94a3b8; margin-bottom: 2px; }
+  .scenario-stat-val { font-size: 11px; font-weight: 700; color: #0f172a; }
+  .scenario.green .scenario-stat:last-child .scenario-stat-val { color: #059669; }
+  .scenario.amber .scenario-stat:last-child .scenario-stat-val { color: #d97706; }
+  .scenario.red .scenario-stat:last-child .scenario-stat-val { color: #dc2626; }
+  .scenario-item { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 4px; }
+  .scenario-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .scenario.green .scenario-dot { background: #34d399; }
+  .scenario.amber .scenario-dot { background: #fbbf24; }
+  .scenario.red .scenario-dot { background: #f87171; }
+  .scenario-item p { font-size: 11px; color: #475569; }
+
+  /* Scorecard row */
+  .scorerow { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  .scorerow:last-child { border-bottom: none; }
+  .scorerow-text { flex: 1; }
+  .scorerow-text p { font-size: 13px; font-weight: 500; color: #0f172a; }
+  .scorerow-text small { font-size: 11px; color: #94a3b8; }
+
+  /* Action items */
+  .action-item { padding: 12px 0; border-bottom: 1px solid; }
+  .action-item.red-border { border-color: #fecaca; }
+  .action-item.amber-border { border-color: #fde68a; }
+  .action-item:last-child { border-bottom: none; }
+  .action-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  .action-title { font-size: 13px; font-weight: 600; color: #0f172a; }
+  .action-detail { font-size: 11px; color: #64748b; }
+
+  /* Area cards */
+  .area-item { padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+  .area-item:last-child { border-bottom: none; }
+  .area-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+  .area-name { font-size: 13px; font-weight: 700; color: #0f172a; }
+  .area-rent { font-size: 12px; font-weight: 600; color: #059669; margin-bottom: 3px; }
+  .area-note { font-size: 11px; color: #64748b; }
+
+  /* Dark card elements */
+  .dark-title { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 10px; }
+  .dark-body { font-size: 13px; color: #cbd5e1; line-height: 1.6; margin-bottom: 12px; }
+  .dark-sub { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+  .dark-sub.violet { color: #a78bfa; }
+  .dark-sub.red { color: #f87171; }
+  .dark-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #1e293b; }
+  .dark-item:last-child { border-bottom: none; }
+  .dark-num { font-size: 11px; font-weight: 700; width: 14px; flex-shrink: 0; }
+  .dark-num.violet { color: #a78bfa; }
+  .dark-num.red { color: #f87171; }
+  .dark-item p { font-size: 13px; color: #cbd5e1; }
+
+  /* Divider */
+  .gap { height: 4px; }
+
+  /* Gap deficit box */
+  .deficit-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .deficit-cell { background: #fff; border: 1px solid #fecaca; border-radius: 12px; padding: 10px; text-align: center; }
+  .deficit-label { font-size: 10px; color: #94a3b8; margin-bottom: 4px; }
+  .deficit-value { font-size: 13px; font-weight: 700; color: #dc2626; }
+
+  /* Ecosystem items */
+  .eco-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  .eco-item:last-child { border-bottom: none; }
+  .eco-org { font-size: 12px; font-weight: 700; color: #7c3aed; width: 130px; flex-shrink: 0; margin-top: 1px; }
+  .eco-note { font-size: 12px; color: #64748b; }
+
+  /* Timeline */
+  .timeline-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  .timeline-item:last-child { border-bottom: none; }
+  .timeline-month { font-size: 11px; font-weight: 700; color: #7c3aed; width: 90px; flex-shrink: 0; }
+  .timeline-action { font-size: 12px; color: #475569; flex: 1; }
+
+  /* Gap note */
+  .gap-note { font-size: 11px; color: #991b1b; margin-top: 10px; }
+
+  /* Vis answer row */
+  .vis-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  .vis-row:last-child { border-bottom: none; }
+  .vis-row p { font-size: 12px; color: #64748b; flex: 1; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="header-title">
+        <h1>Singapore to London</h1>
+        <p>2-Year Sprint Analysis — Ashiq, June 2026</p>
+      </div>
+      <div class="header-badges">
+        <span class="badge purple">Wife-Led / EY TP Entry Manager</span>
+        <span class="badge gold">GBP 70K + Visas Covered</span>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="active" onclick="showSection('overview', this)">Overview</button>
+      <button onclick="showSection('numbers', this)">Real Numbers</button>
+      <button onclick="showSection('roi', this)">2-Year ROI</button>
+      <button onclick="showSection('position', this)">Your Position</button>
+      <button onclick="showSection('muslim', this)">Muslim Life</button>
+      <button onclick="showSection('action', this)">Action Plan</button>
+      <button onclick="showSection('verdict', this)">Verdict</button>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- OVERVIEW -->
+  <div class="section active" id="section-overview">
+    <div class="section-title">
+      <h2>The Reframed Proposition</h2>
+      <p>A fixed 2-year career sprint, not a lifestyle migration</p>
+    </div>
+
+    <div class="card card-violet">
+      <p style="font-size:13px;font-weight:600;color:#5b21b6;margin-bottom:6px;">This is not a migration. It is a 2-year career deployment.</p>
+      <p style="font-size:13px;color:#6d28d9;line-height:1.6;">Your wife gets EY London TP Entry Manager on her CV with EMEA exposure. You maintain income remotely, immerse in London's AI ecosystem, and both return to Singapore in 2 years meaningfully stronger. That framing changes every decision in this analysis.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="stat-card"><div class="stat-label">Wife's gross salary</div><div class="stat-value">GBP 70K/yr</div><div class="stat-note">EY TP Entry Manager, London Bridge</div></div>
+      <div class="stat-card amber"><div class="stat-label">Wife's net take-home</div><div class="stat-value">~SGD 7,100/mo</div><div class="stat-note">After UK income tax + NI at ~40% effective</div></div>
+      <div class="stat-card green"><div class="stat-label">EY covers</div><div class="stat-value">All 4 visas</div><div class="stat-note">You + 2 boys as dependents. NHS TBC.</div></div>
+      <div class="stat-card red"><div class="stat-label">EY relocation</div><div class="stat-value">GBP 4,000</div><div class="stat-note">Below standard — needs renegotiation</div></div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">The one variable that determines everything</p>
+      <div style="background:#0f172a;border-radius:12px;padding:14px;margin-bottom:12px;">
+        <p style="font-size:11px;color:#64748b;margin-bottom:4px;">The critical question</p>
+        <p style="font-size:13px;font-weight:600;color:#fff;">Can your SG employer pay you SGD 9–12K/mo while you work remotely from London?</p>
+      </div>
+      <div class="vis-row">
+        <span class="badge green">Yes — confirmed</span>
+        <p>Monthly surplus SGD 4–7K. 2 years works financially and professionally.</p>
+      </div>
+      <div class="vis-row">
+        <span class="badge amber">Possibly — not discussed</span>
+        <p>Have this conversation this week. Everything else is secondary.</p>
+      </div>
+      <div class="vis-row">
+        <span class="badge red">No — leaving job</span>
+        <p>SGD 40–70K drawn from savings over 2 years. Painful but survivable if savings exist.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- REAL NUMBERS -->
+  <div class="section" id="section-numbers">
+    <div class="section-title">
+      <h2>The Real Financial Numbers</h2>
+      <p>No rounding. No optimism. The actual monthly math.</p>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Wife's GBP 70K — what actually lands in the account</p>
+      <p style="font-size:11px;color:#94a3b8;margin-bottom:12px;">UK income tax + National Insurance 2026/27 rates</p>
+      <div class="row"><div class="row-label">Gross annual salary</div><div class="row-value">GBP 70,000</div></div>
+      <div class="row"><div class="row-label">Personal allowance (tax-free)<div class="row-note">First GBP 12,570 untaxed</div></div><div class="row-value green">GBP 12,570</div></div>
+      <div class="row"><div class="row-label">Basic rate tax (20% on GBP 12,571–50,270)</div><div class="row-value red">− GBP 7,540</div></div>
+      <div class="row"><div class="row-label">Higher rate tax (40% on GBP 50,271–70,000)</div><div class="row-value red">− GBP 7,892</div></div>
+      <div class="row"><div class="row-label">National Insurance (12% / 2%)</div><div class="row-value red">− GBP 3,432</div></div>
+      <div class="row"><div class="row-label">Annual net take-home</div><div class="row-value green">GBP 51,136</div></div>
+      <div class="row highlight"><div class="row-label bold">Monthly net take-home</div><div class="row-value violet">GBP 4,261 / SGD 7,207</div></div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Monthly costs — family of 4, London Zone 2–3</p>
+      <p style="font-size:11px;color:#94a3b8;margin-bottom:12px;">Near London Bridge / Bermondsey / Borough area</p>
+      <div class="row"><div class="row-label">Rent (3BR, Zone 2 Southwark/Bermondsey)<div class="row-note">Good family area, walkable to London Bridge EY</div></div><div class="row-value">GBP 2,800–3,200</div></div>
+      <div class="row"><div class="row-label">Childcare (2 boys under 6)<div class="row-note">15hrs/week free from age 3. Under-3 = full cost.</div></div><div class="row-value">GBP 1,200–1,800</div></div>
+      <div class="row"><div class="row-label">Groceries</div><div class="row-value">GBP 600–800</div></div>
+      <div class="row"><div class="row-label">Transport (Oyster x2)<div class="row-note">Zone 1–2 Travelcard GBP 178/person/mo</div></div><div class="row-value">GBP 280–380</div></div>
+      <div class="row"><div class="row-label">Utilities + broadband</div><div class="row-value">GBP 280–380</div></div>
+      <div class="row"><div class="row-label">Eating out + misc</div><div class="row-value">GBP 400–600</div></div>
+      <div class="row"><div class="row-label">NHS / prescriptions<div class="row-note">Free for eligible residents — confirm IHS coverage</div></div><div class="row-value">GBP 50–100</div></div>
+      <div class="row highlight"><div class="row-label bold">TOTAL monthly costs</div><div class="row-value violet">GBP 5,610–7,260 / SGD 9,481–12,269</div></div>
+    </div>
+
+    <div class="card card-red">
+      <p class="card-title red">Wife's salary alone: monthly gap</p>
+      <div class="deficit-grid">
+        <div class="deficit-cell"><div class="deficit-label">Her net</div><div class="deficit-value">SGD 7,207</div></div>
+        <div class="deficit-cell"><div class="deficit-label">Family costs</div><div class="deficit-value">SGD 9,481–12,269</div></div>
+        <div class="deficit-cell"><div class="deficit-label">Monthly shortfall</div><div class="deficit-value">SGD 2,274–5,062</div></div>
+      </div>
+      <p class="gap-note">Your income is structurally required — not optional. This is the core financial reality of this move.</p>
+    </div>
+
+    <div class="card">
+      <p class="card-title">One-time setup costs (after EY covers visas)</p>
+      <div class="row"><div class="row-label">EY covers — all 4 visas<div class="row-note">Confirm this includes NHS IHS surcharge for dependents</div></div><div class="row-value green">GBP 0 to you</div></div>
+      <div class="row"><div class="row-label">IHS if NOT covered (you + 2 boys, 2 years)<div class="row-note">GBP 1,035 × 3 people × 2 years — confirm with EY</div></div><div class="row-value red">GBP 6,210 / SGD 10,495</div></div>
+      <div class="row"><div class="row-label">EY relocation allowance</div><div class="row-value">GBP 4,000 / SGD 6,760</div></div>
+      <div class="row"><div class="row-label">Shipping / relocation top-up</div><div class="row-value">SGD 5–8K out of pocket</div></div>
+      <div class="row"><div class="row-label">Rental deposit (5–6 weeks)<div class="row-note">London landlords require this upfront — not EY covered</div></div><div class="row-value">GBP 3,750–4,800 / SGD 6,338–8,112</div></div>
+      <div class="row"><div class="row-label">Setup / furnishings (often unfurnished)</div><div class="row-value">SGD 6–10K</div></div>
+      <div class="row"><div class="row-label">Emergency buffer (3 months)</div><div class="row-value">SGD 20–30K</div></div>
+      <div class="row highlight"><div class="row-label bold">TOTAL out of pocket (if IHS covered)</div><div class="row-value violet">SGD 37–57K</div></div>
+      <div class="row"><div class="row-label">TOTAL out of pocket (if IHS NOT covered)</div><div class="row-value red">SGD 47–67K</div></div>
+    </div>
+  </div>
+
+  <!-- 2-YEAR ROI -->
+  <div class="section" id="section-roi">
+    <div class="section-title">
+      <h2>2-Year Career ROI</h2>
+      <p>Is 2 years in London worth it for both careers — with real numbers</p>
+    </div>
+
+    <div class="card">
+      <p class="card-title green">Your wife's ROI — clear yes</p>
+      <div class="row"><div class="row-label">Role<div class="row-note">Transfer Pricing is the hottest area in global tax — BEPS, Pillar Two, OECD reforms driving massive demand</div></div><div class="row-value" style="font-size:12px;text-align:right;max-width:180px;">EY TP Entry Manager, London Bridge</div></div>
+      <div class="row"><div class="row-label">What 2 years buys her<div class="row-note">EY London is categorically different from EY SG in deal size, complexity, and client profile</div></div><div class="row-value" style="font-size:12px;text-align:right;max-width:180px;">EMEA portfolio + global network</div></div>
+      <div class="row"><div class="row-label">Grade trajectory</div><div class="row-value">Entry Mgr → confirmed Manager</div></div>
+      <div class="row"><div class="row-label">Singapore salary on return<div class="row-note">EY London TP Manager returning to SG commands significant premium — TP talent scarce</div></div><div class="row-value green">SGD 15,000–20,000+/mo</div></div>
+      <div class="row"><div class="row-label">Annual salary uplift vs staying</div><div class="row-value green">SGD 25–40K/yr more</div></div>
+      <div class="row highlight"><div class="row-label bold">Career ROI verdict</div><div class="row-value green">Strong positive</div></div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Your ROI — scenario dependent</p>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+
+        <div class="scenario green">
+          <div class="scenario-verdict">Strong yes</div>
+          <p class="scenario-title">Scenario A: SG employer confirms remote</p>
+          <div class="scenario-stats">
+            <div class="scenario-stat"><div class="scenario-stat-label">Combined income</div><div class="scenario-stat-val">SGD 16–19K/mo</div></div>
+            <div class="scenario-stat"><div class="scenario-stat-label">Monthly costs</div><div class="scenario-stat-val">SGD 9.5–12K/mo</div></div>
+            <div class="scenario-stat"><div class="scenario-stat-label">Net position</div><div class="scenario-stat-val">SGD 4–7K surplus</div></div>
+          </div>
+          <div class="scenario-item"><div class="scenario-dot"></div><p>Maintain full income. Cover all London costs with surplus.</p></div>
+          <div class="scenario-item"><div class="scenario-dot"></div><p>Use London as AI ecosystem immersion — DeepMind, Wayve, Anthropic UK, meetups, conferences.</p></div>
+          <div class="scenario-item"><div class="scenario-dot"></div><p>Complete Quantic MS AI Engineering with London as base — more credible context.</p></div>
+          <div class="scenario-item"><div class="scenario-dot"></div><p>Return to Singapore as AI Engineer with UK network + 2 years APAC remote delivery experience.</p></div>
+          <div class="scenario-item"><div class="scenario-dot"></div><p>Net financial position over 2 years: roughly neutral to slightly positive after setup costs.</p></div>
+        </div>
+
+        <div class="scenario amber">
+          <div class="scenario-verdict">Workable if savings exist</div>
+          <p class="scenario-title">Scenario B: Leave SG job, find UK role (6–12 months)</p>
+          <div class="scenario-stats">
+            <div class="scenario-stat"><div class="scenario-stat-label">Combined income</div><div class="scenario-stat-val">SGD 7,207 → SGD 16–19K</div></div>
+            <div class="scenario-stat"><div class="scenario-stat-label">Monthly costs</div><div class="scenario-stat-val">SGD 9.5–12K/mo</div></div>
+            <div class="scenario-stat"><div class="scenario-stat-label">Net position</div><div class="scenario-stat-val">SGD 30–60K gap</div></div>
+          </div>
+          <div class="scenario-item"><div class="scenario-dot"></div><p>6–12 month income gap while finding UK Solutions Engineer / AI role.</p></div>
+          <div class="scenario-item"><div class="scenario-dot"></div><p>Your SAP/EPM/AI profile is marketable in London — GBP 80–110K realistic.</p></div>
+          <div class="scenario-item"><div class="scenario-dot"></div><p>Year 2 you'd be earning and building UK career. Return to SG or pivot to UAE from stronger position.</p></div>
+          <div class="scenario-item"><div class="scenario-dot"></div><p>Requires SGD 60–80K liquid savings buffer. Stressful with two young boys.</p></div>
+        </div>
+
+        <div class="scenario red">
+          <div class="scenario-verdict">Not recommended for 2-year stint</div>
+          <p class="scenario-title">Scenario C: Scrypt as primary income from London</p>
+          <div class="scenario-stats">
+            <div class="scenario-stat"><div class="scenario-stat-label">Combined income</div><div class="scenario-stat-val">SGD 7,207 + Scrypt</div></div>
+            <div class="scenario-stat"><div class="scenario-stat-label">Monthly costs</div><div class="scenario-stat-val">SGD 9.5–12K/mo</div></div>
+            <div class="scenario-stat"><div class="scenario-stat-label">Net position</div><div class="scenario-stat-val">SGD 50–80K drawn</div></div>
+          </div>
+          <div class="scenario-item"><div class="scenario-dot"></div><p>Scrypt UK pivot takes 12–18 months minimum to replace SG income.</p></div>
+          <div class="scenario-item"><div class="scenario-dot"></div><p>2-year window closes before you see real traction.</p></div>
+          <div class="scenario-item"><div class="scenario-dot"></div><p>UK SME market is different — different buyer behaviour, longer sales cycles.</p></div>
+          <div class="scenario-item"><div class="scenario-dot"></div><p>Only viable if Scrypt is a long-term plan, not a bridge income strategy.</p></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">What 2 years in London builds for you (Scenario A)</p>
+      <div class="scorerow"><div class="scorerow-text"><p>AI ecosystem access</p><small>DeepMind, Wayve, Anthropic UK, Stability AI — all London-based. EMEA AI conference circuit.</small></div><span class="badge green">High</span></div>
+      <div class="scorerow"><div class="scorerow-text"><p>UK professional network</p><small>SAP/EPM, AI pre-sales, solutions engineering community. Warm contacts for UAE pivot later.</small></div><span class="badge green">High</span></div>
+      <div class="scorerow"><div class="scorerow-text"><p>Quantic MS completion context</p><small>Studying AI Engineering while embedded in Europe's AI hub adds credibility.</small></div><span class="badge blue">Medium</span></div>
+      <div class="scorerow"><div class="scorerow-text"><p>Scrypt EU preparation</p><small>Understanding UK/EU SME market, GDPR context, potential future clients if you return.</small></div><span class="badge blue">Medium</span></div>
+      <div class="scorerow"><div class="scorerow-text"><p>Family experience</p><small>Boys aged 2–4 gain formative international childhood experience with zero schooling disruption.</small></div><span class="badge slate">Bonus</span></div>
+    </div>
+  </div>
+
+  <!-- YOUR POSITION -->
+  <div class="section" id="section-position">
+    <div class="section-title">
+      <h2>Your Position in This Move</h2>
+      <p>What your day-to-day actually looks like in London</p>
+    </div>
+
+    <div class="card card-amber">
+      <p class="card-title amber">Name it clearly</p>
+      <p style="font-size:13px;color:#92400e;line-height:1.6;">In London, you are the dependent on paper — but your income is what makes this financially viable. You carry both the family load when your wife is working EY hours, and the financial load if your SG income isn't secured. That is a significant dual responsibility. Worth naming before you go, not after.</p>
+    </div>
+
+    <div class="card">
+      <p class="card-title red">EY TP Manager hours — what to expect</p>
+      <div class="procon"><div class="procon-dot con">−</div><div class="procon-text">EY consulting at Manager grade routinely runs 50–60 hour weeks during busy season (Jan–April tax season especially)</div></div>
+      <div class="procon"><div class="procon-dot con">−</div><div class="procon-text">London Bridge is a large, high-pressure commercial hub — not a relaxed posting</div></div>
+      <div class="procon"><div class="procon-dot con">−</div><div class="procon-text">Client travel within UK and Europe is normal at Manager grade — she may be away 1–2 nights/week</div></div>
+      <div class="procon"><div class="procon-dot con">−</div><div class="procon-text">Busy season overlap with boys' needs will fall on you to manage</div></div>
+      <div class="procon"><div class="procon-dot con">−</div><div class="procon-text">This is not a lifestyle move for your wife — it is a career acceleration move. Plan your home life accordingly.</div></div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">What you should be doing in London (Scenario A)</p>
+      <div class="timeline-item"><div class="timeline-month">Month 1–2</div><div class="timeline-action">Settle family, formalise SG remote arrangement in writing, register Scrypt as UK Ltd company</div><span class="badge red">Critical</span></div>
+      <div class="timeline-item"><div class="timeline-month">Month 2–4</div><div class="timeline-action">Start attending London AI meetups — LLM Meetup London, AI Engineer community, EPM user groups</div><span class="badge amber">High</span></div>
+      <div class="timeline-item"><div class="timeline-month">Month 3–6</div><div class="timeline-action">Complete a Quantic module sprint — use the time and ecosystem proximity to accelerate your MS</div><span class="badge amber">High</span></div>
+      <div class="timeline-item"><div class="timeline-month">Month 4–8</div><div class="timeline-action">Begin building UK/EU Scrypt client pipeline — even 1–2 UK clients adds international revenue credibility</div><span class="badge slate">Medium</span></div>
+      <div class="timeline-item"><div class="timeline-month">Month 6–18</div><div class="timeline-action">Evaluate UK AI/Solutions Engineer opportunities — GBP 80–110K is realistic, useful optionality even if not taken</div><span class="badge slate">Medium</span></div>
+      <div class="timeline-item"><div class="timeline-month">Month 18–24</div><div class="timeline-action">Begin return planning — brief SG network, assess whether Dubai opportunity has materialised, negotiate return role</div><span class="badge amber">High</span></div>
+    </div>
+
+    <div class="card">
+      <p class="card-title violet">London AI ecosystem — what you actually access</p>
+      <div class="eco-item"><div class="eco-org">DeepMind</div><div class="eco-note">Google DeepMind HQ is in London — world's most advanced AI research lab. UK AI community revolves around it.</div></div>
+      <div class="eco-item"><div class="eco-org">Anthropic UK</div><div class="eco-note">London office and growing UK team — your existing Claude API work becomes a direct conversation starter.</div></div>
+      <div class="eco-item"><div class="eco-org">Wayve</div><div class="eco-note">World-leading autonomous driving AI, London-based — AI engineering crossover to your profile.</div></div>
+      <div class="eco-item"><div class="eco-org">Alan Turing Institute</div><div class="eco-note">UK's national AI research institute — public talks, networking, research access. Free to attend.</div></div>
+      <div class="eco-item"><div class="eco-org">LLM / AI Meetups</div><div class="eco-note">London has one of the world's most active AI practitioner meetup scenes. Monthly events, 200–500 attendees.</div></div>
+      <div class="eco-item"><div class="eco-org">EY AI Practice</div><div class="eco-note">Back-channel access via your wife's network — client introductions, internal AI projects, warm contacts.</div></div>
+    </div>
+  </div>
+
+  <!-- MUSLIM LIFE -->
+  <div class="section" id="section-muslim">
+    <div class="section-title">
+      <h2>Muslim Life in London</h2>
+      <p>Better than you think — but requires active effort, not passive immersion</p>
+    </div>
+
+    <div class="card">
+      <p class="card-title green">What London genuinely delivers</p>
+      <div class="procon"><div class="procon-dot pro">+</div><div class="procon-text">400+ mosques — more than any other Western city. Jumu'ah is never a logistical problem.</div></div>
+      <div class="procon"><div class="procon-dot pro">+</div><div class="procon-text">East London Mosque in Whitechapel holds 7,000+ worshippers — one of the largest in Europe.</div></div>
+      <div class="procon"><div class="procon-dot pro">+</div><div class="procon-text">Halal food is dense and diverse — South Asian, Middle Eastern, Turkish, West African. Brick Lane, Whitechapel, Green Street.</div></div>
+      <div class="procon"><div class="procon-dot pro">+</div><div class="procon-text">Areas like East Ham, Ilford, Whitechapel are effectively Muslim neighbourhoods — community is self-sustaining.</div></div>
+      <div class="procon"><div class="procon-dot pro">+</div><div class="procon-text">Large Malay-Muslim community — Singaporean and Malaysian expats, familiar cultural touchpoints.</div></div>
+      <div class="procon"><div class="procon-dot pro">+</div><div class="procon-text">Islamic schools available (state-funded and independent) — options for your boys when school age arrives.</div></div>
+      <div class="procon"><div class="procon-dot pro">+</div><div class="procon-text">Ramadan is genuinely felt in Muslim areas — communal iftars, late-night Taraweeh, Ramadan bazaars.</div></div>
+    </div>
+
+    <div class="card">
+      <p class="card-title red">What London cannot give you</p>
+      <div class="procon"><div class="procon-dot con">−</div><div class="procon-text">Islam is a minority religion. Your boys grow up as the exception, not the norm.</div></div>
+      <div class="procon"><div class="procon-dot con">−</div><div class="procon-text">No adhan across the city. No ambient Islamic culture. Muslim life is sought, not absorbed.</div></div>
+      <div class="procon"><div class="procon-dot con">−</div><div class="procon-text">Alcohol is deeply embedded in British professional culture — client dinners, work socials, EY events.</div></div>
+      <div class="procon"><div class="procon-dot con">−</div><div class="procon-text">Islamophobia exists — not systemic but real, especially in media and political discourse.</div></div>
+      <div class="procon"><div class="procon-dot con">−</div><div class="procon-text">Winter prayer times are brutal — Maghrib at 4pm, compressed Dhuhr/Asr in quick succession.</div></div>
+      <div class="procon"><div class="procon-dot con">−</div><div class="procon-text">Friday prayers require deliberate planning at EY — not culturally normalised the way it is in UAE or Malaysia.</div></div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Best areas near London Bridge EY office</p>
+      <div class="area-item">
+        <div class="area-header"><span class="area-name">Bermondsey / Borough (Zone 1–2)</span><span class="badge purple">5–10 min walk to EY</span></div>
+        <div class="area-rent">GBP 2,800–3,400/mo</div>
+        <p class="area-note">Most convenient for EY. Trendy, diverse, good transport. Halal options growing. Priciest option.</p>
+      </div>
+      <div class="area-item">
+        <div class="area-header"><span class="area-name">East Ham / Forest Gate (Zone 3)</span><span class="badge purple">30–35 min via Elizabeth line</span></div>
+        <div class="area-rent">GBP 1,800–2,400/mo</div>
+        <p class="area-note">Best Muslim community. Dense halal food, excellent mosques, South Asian and Malay families. Saves GBP 400–800/mo on rent.</p>
+      </div>
+      <div class="area-item">
+        <div class="area-header"><span class="area-name">Ilford (Zone 4)</span><span class="badge purple">35–40 min via Elizabeth line</span></div>
+        <div class="area-rent">GBP 1,700–2,200/mo</div>
+        <p class="area-note">Very large Muslim population, affordable, family-friendly. Elizabeth line makes London Bridge accessible. Best overall value.</p>
+      </div>
+      <div class="area-item">
+        <div class="area-header"><span class="area-name">Whitechapel / Stepney (Zone 2)</span><span class="badge purple">20–25 min via Jubilee</span></div>
+        <div class="area-rent">GBP 2,200–2,800/mo</div>
+        <p class="area-note">Muslim heartland. Halal everywhere. Urban and dense. Great for Muslim identity, less space for two young boys.</p>
+      </div>
+    </div>
+
+    <div class="card card-violet">
+      <p style="font-size:13px;font-weight:600;color:#5b21b6;margin-bottom:6px;">Recommendation: Ilford or East Ham</p>
+      <p style="font-size:13px;color:#6d28d9;line-height:1.6;">Save GBP 600–1,000/month on rent vs Bermondsey, live in a genuine Muslim community, commute 30–35 minutes on the Elizabeth line. For a 2-year stint with two young boys and a tight budget, this is the right call.</p>
+    </div>
+  </div>
+
+  <!-- ACTION PLAN -->
+  <div class="section" id="section-action">
+    <div class="section-title">
+      <h2>Pre-Move Action Plan</h2>
+      <p>Ordered by urgency — do these before anything else</p>
+    </div>
+
+    <div class="card">
+      <p class="card-title red">Do these NOW — before committing</p>
+      <div class="action-item red-border">
+        <div class="action-header"><span class="action-title">Have the formal conversation with your SG employer</span><span class="badge red">This week</span></div>
+        <p class="action-detail">Frame it as a fixed 24-month arrangement. Propose a remote working agreement. Get it in writing. This is the single most important pre-move step.</p>
+      </div>
+      <div class="action-item red-border">
+        <div class="action-header"><span class="action-title">Clarify NHS IHS coverage with EY HR</span><span class="badge red">This week</span></div>
+        <p class="action-detail">EY covers your 4 visas — but does that include the NHS Immigration Health Surcharge? GBP 1,035/person/year × 3 people × 2 years = GBP 6,210. Confirm before signing.</p>
+      </div>
+      <div class="action-item red-border">
+        <div class="action-header"><span class="action-title">Push EY to increase relocation to GBP 10–12K</span><span class="badge red">Before signing</span></div>
+        <p class="action-detail">GBP 4K for a family of 4 is below EY's own standard. Reference EY's global mobility policy. Ask for itemised relocation support. Worst case they say no.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-title amber">Do these before you leave Singapore</p>
+      <div class="action-item amber-border">
+        <div class="action-header"><span class="action-title">Get HDB approval to rent out your flat</span><span class="badge amber">2 months out</span></div>
+        <p class="action-detail">Apply to HDB for approval to sublet while overseas. Rental income SGD 2,500–3,500/mo is a meaningful additional buffer.</p>
+      </div>
+      <div class="action-item amber-border">
+        <div class="action-header"><span class="action-title">Set CPF OA to cash mortgage payments</span><span class="badge amber">1 month out</span></div>
+        <p class="action-detail">If CPF OA funds the mortgage, switch to cash payments or ensure OA balance remains sufficient. You cannot contribute to CPF from overseas employment.</p>
+      </div>
+      <div class="action-item amber-border">
+        <div class="action-header"><span class="action-title">Consult a Singapore tax advisor</span><span class="badge amber">1 month out</span></div>
+        <p class="action-detail">IRAS may still tax your SG-sourced income even if earned in London. A one-time consultation prevents a costly surprise.</p>
+      </div>
+      <div class="action-item amber-border">
+        <div class="action-header"><span class="action-title">Register Scrypt as a UK limited company</span><span class="badge amber">First month in London</span></div>
+        <p class="action-detail">Gives you professional identity in the UK from day 1. Simple Companies House registration. Lets you invoice UK clients cleanly.</p>
+      </div>
+      <div class="action-item amber-border">
+        <div class="action-header"><span class="action-title">Open a UK bank account (Starling or Monzo)</span><span class="badge amber">Before arrival</span></div>
+        <p class="action-detail">Apply before arriving if possible. Having a UK account ready speeds up rental deposits and salary receipt.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-title green">Set these up in first 3 months in London</p>
+      <div class="procon"><div class="procon-dot pro">+</div><div class="procon-text">Attend your first London AI / LLM meetup — your network starts here</div></div>
+      <div class="procon"><div class="procon-dot pro">+</div><div class="procon-text">Register for Alan Turing Institute public events — free and excellent</div></div>
+      <div class="procon"><div class="procon-dot pro">+</div><div class="procon-text">Connect with the London Singaporean Muslim community — they exist and are active</div></div>
+      <div class="procon"><div class="procon-dot pro">+</div><div class="procon-text">Find your local mosque in Ilford / East Ham — join the community before you need it</div></div>
+      <div class="procon"><div class="procon-dot pro">+</div><div class="procon-text">Start one new Quantic MS module — use the timezone difference productively</div></div>
+      <div class="procon"><div class="procon-dot pro">+</div><div class="procon-text">Research UAE AI job opportunities quietly — if Dubai role materialises, London network accelerates it</div></div>
+    </div>
+  </div>
+
+  <!-- VERDICT -->
+  <div class="section" id="section-verdict">
+    <div class="section-title">
+      <h2>Final Verdict</h2>
+      <p>The honest answer to: is 2 years in London worth it?</p>
+    </div>
+
+    <div class="card">
+      <p class="card-title" style="margin-bottom:16px;">2-year ROI scorecard</p>
+      <div class="scorerow"><div class="scorerow-text"><p>Wife's career ROI</p><small>EY TP Entry Manager London → confirmed Manager. SGD 25–40K/yr salary premium on return.</small></div><span class="badge green">Strong positive</span></div>
+      <div class="scorerow"><div class="scorerow-text"><p>Your career ROI (Scenario A)</p><small>AI ecosystem access, UK network, Quantic context. Net neutral financially. Worth it.</small></div><span class="badge green">Positive</span></div>
+      <div class="scorerow"><div class="scorerow-text"><p>Your career ROI (Scenario B/C)</p><small>Income gap of SGD 30–70K over 2 years. Survivable but stressful.</small></div><span class="badge amber">Risky</span></div>
+      <div class="scorerow"><div class="scorerow-text"><p>Financial position overall</p><small>GBP 70K is below the London family comfort threshold. Your income is load-bearing.</small></div><span class="badge amber">Tight</span></div>
+      <div class="scorerow"><div class="scorerow-text"><p>Muslim lifestyle</p><small>Not UAE or Malaysia. But with the right neighbourhood (Ilford/East Ham), it works for 2 years.</small></div><span class="badge amber">Manageable</span></div>
+      <div class="scorerow"><div class="scorerow-text"><p>Family life quality</p><small>EY consulting hours + London costs + young boys = year 1 is hard. Year 2 finds its rhythm.</small></div><span class="badge amber">Challenging yr 1</span></div>
+      <div class="scorerow"><div class="scorerow-text"><p>Long-term wealth impact</p><small>HDB retained, CPF intact, no permanent damage if Scenario A. A 2-year pause, not a setback.</small></div><span class="badge green">Neutral</span></div>
+    </div>
+
+    <div class="card-dark">
+      <p class="dark-title">Bottom line</p>
+      <p class="dark-body">For your wife, this is a clear yes. EY London TP Entry Manager is a meaningful career step that pays back financially within 18 months of returning to Singapore. There is no comparable opportunity in Singapore that gives her this within 2 years.</p>
+      <p class="dark-body">For you, the answer is: yes, but only if your SG employer confirms remote. That conversation is the only variable that matters right now. Everything else — neighbourhood, schooling, Scrypt, AI meetups — is secondary to that single answer.</p>
+
+      <p class="dark-sub violet">Go if:</p>
+      <div class="dark-item"><span class="dark-num violet">1.</span><p>SG employer confirms remote work from London — in writing, for 24 months.</p></div>
+      <div class="dark-item"><span class="dark-num violet">2.</span><p>EY confirms NHS IHS is covered for you and the boys — get it in the offer letter.</p></div>
+      <div class="dark-item"><span class="dark-num violet">3.</span><p>EY increases relocation to at least GBP 8–10K — push for this before signing.</p></div>
+      <div class="dark-item"><span class="dark-num violet">4.</span><p>You and your wife have explicitly agreed on the EY hours reality and who handles the boys day-to-day.</p></div>
+      <div class="dark-item"><span class="dark-num violet">5.</span><p>You treat it as a career sprint with a clear return date — not an open-ended lifestyle experiment.</p></div>
+
+      <p class="dark-sub red" style="margin-top:16px;">Do not go if:</p>
+      <div class="dark-item"><span class="dark-num red">1.</span><p>SG employer says no and you have less than SGD 60K liquid savings.</p></div>
+      <div class="dark-item"><span class="dark-num red">2.</span><p>EY won't budge on IHS coverage and relocation — that's a red flag about how they value the posting.</p></div>
+      <div class="dark-item"><span class="dark-num red">3.</span><p>You are going primarily for the London lifestyle. It will not deliver that in year 1.</p></div>
+    </div>
+
+    <div class="card card-violet">
+      <p style="font-size:13px;font-weight:600;color:#5b21b6;margin-bottom:6px;">Where London fits in your overall picture</p>
+      <p style="font-size:13px;color:#6d28d9;line-height:1.6;">London is not your lifestyle destination — UAE or Malaysia is. London is a 2-year career investment with a defined return. Done right, you both come back to Singapore stronger, with options. Your wife returns as a London-trained TP Manager commanding a premium. You return with a UK AI network and potentially a UAE offer already in play. That is a legitimate plan.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
